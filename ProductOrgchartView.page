@@ -1,0 +1,54 @@
+<apex:page sidebar="false" controller="ProductOrgchartController" title="Demo Products Orgchart View">
+
+    <apex:sectionHeader title="Google Charts + Javascript Remoting" subtitle="Demoing - Product Orgchart View"/>
+    <head>
+    <!-- Load Google Visulization API -->
+    <apex:includeScript value="https://www.google.com/jsapi" />
+    
+    <script type='text/javascript'>
+        // Load Google Orgchart package
+        google.load('visualization', '1.0', {'packages':['orgchart']});
+        google.setOnLoadCallback(drawChart);
+
+        function drawChart() {
+            // Javascript remoting call to get all the products
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.ProductOrgchartController.loadProducts}',
+                function(result, event) {
+                    if(event.status) {
+                        // Initilize DataTable Object
+                        var data = new google.visualization.DataTable();
+                        data.addColumn('string','Chocolate');
+                        data.addColumn('string','Parent Chocolate');
+                        data.addColumn('string','Tooltip');
+                        
+                        // Add rows from the remoting results
+                        // alert(JSON.stringify(result));
+                        for(var i=0; i<result.length; i++) {
+                            var r = result[i];
+                            
+                            // Adding Data to DataTable Object
+                            // v: r.id => ID of the node
+                            // f: r.name => Name display on the node
+                            // r: r.Parent_Product__c => ID of parent node
+                            // r.Name: Tooltip text => Display text on the node hover
+                            
+                            data.addRow([{v:r.Id,f:r.Name}, r.Parent_Product__c, r.Name]);
+                        }
+                        
+                        var chart = new google.visualization.OrgChart(document.getElementById('chart_div'));
+                        chart.draw(data, {allowHtml:true});
+                    }
+                    
+                },
+                {escape: true}
+            );
+        }
+    </script>
+    </head>
+    
+    <body>
+        <div id='chart_div' style="font-size:18px;"></div>
+    </body>
+    
+</apex:page>
